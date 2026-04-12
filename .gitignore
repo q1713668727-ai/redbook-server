@@ -48,6 +48,9 @@ public/user-image/*
 public/user-background/*
 public/user-avatar/*
 public/note-image/*
+public/javascripts/*
+public/images/*
+
 
 # 但是！不要忽略每个文件夹里的 .gitkeep 文件
 !public/video/.gitkeep
@@ -56,3 +59,5 @@ public/note-image/*
 !public/user-background/.gitkeep
 !public/user-avatar/.gitkeep
 !public/note-image/.gitkeep
+!public/javascripts/.gitkeep
+!public/images/.gitkeep

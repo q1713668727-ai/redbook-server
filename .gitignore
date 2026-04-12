@@ -41,9 +41,18 @@ __screenshots__/
 test-results/
 playwright-report/
 
-public/video/
-public/user-message/
-public/user-image/
-public/user-background/
-public/user-avatar/
-public/note-image/
+# 忽略文件夹内的所有文件
+public/video/*
+public/user-message/*
+public/user-image/*
+public/user-background/*
+public/user-avatar/*
+public/note-image/*
+
+# 但是！不要忽略每个文件夹里的 .gitkeep 文件
+!public/video/.gitkeep
+!public/user-message/.gitkeep
+!public/user-image/.gitkeep
+!public/user-background/.gitkeep
+!public/user-avatar/.gitkeep
+!public/note-image/.gitkeep

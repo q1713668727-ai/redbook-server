@@ -349,12 +349,15 @@ router.post('/add', async (req, res) => {
 router.post('/upload/addComment', async (req, res) => {
   try {
     const noteId = req.body.id;
+    const contentType = String(req.body.contentType || 'note').trim().toLowerCase();
+    const table = contentType === 'video' ? 'video' : 'note';
+    const contentLabel = table === 'video' ? 'Video' : 'Note';
     if (!noteId) {
-      return res.send({ status: 400, message: 'Missing note id.' });
+      return res.send({ status: 400, message: `Missing ${contentLabel.toLowerCase()} id.` });
     }
 
-    const result = await query('SELECT `comment` FROM `note` WHERE `id` = ?;', [noteId]);
-    if (result.length === 0) return res.send({ status: 404, message: 'Note not found.' });
+    const result = await query(`SELECT \`comment\` FROM \`${table}\` WHERE \`id\` = ?;`, [noteId]);
+    if (result.length === 0) return res.send({ status: 404, message: `${contentLabel} not found.` });
 
     const oldComments = parseNoteComments(result[0].comment).map((item) => {
       const likeUsers = normalizeLikeUsers(item.likeUsers || item.likeAccounts || item.likeUserInfo)
@@ -414,7 +417,7 @@ router.post('/upload/addComment', async (req, res) => {
         likeCount: likeUsers.length,
       };
 
-      const updateLikeRes = await query('UPDATE `note` SET comment = ? WHERE `id` = ?;', [JSON.stringify(oldComments), noteId]);
+      const updateLikeRes = await query(`UPDATE \`${table}\` SET \`comment\` = ? WHERE \`id\` = ?;`, [JSON.stringify(oldComments), noteId]);
       if (updateLikeRes.affectedRows === 1) {
         return res.send({
           status: 200,
@@ -458,7 +461,7 @@ router.post('/upload/addComment', async (req, res) => {
       parentComment.replies = Array.isArray(parentComment.replies) ? parentComment.replies : [];
       parentComment.replies.push(reply);
 
-      const updateReplyRes = await query('UPDATE `note` SET comment = ? WHERE `id` = ?;', [JSON.stringify(oldComments), noteId]);
+      const updateReplyRes = await query(`UPDATE \`${table}\` SET \`comment\` = ? WHERE \`id\` = ?;`, [JSON.stringify(oldComments), noteId]);
       if (updateReplyRes.affectedRows === 1) {
         return res.send({
           status: 200,
@@ -484,7 +487,7 @@ router.post('/upload/addComment', async (req, res) => {
 
     oldComments.push(newComment);
 
-    const updateRes = await query('UPDATE `note` SET comment = ? WHERE `id` = ?;', [JSON.stringify(oldComments), noteId]);
+    const updateRes = await query(`UPDATE \`${table}\` SET \`comment\` = ? WHERE \`id\` = ?;`, [JSON.stringify(oldComments), noteId]);
 
     if (updateRes.affectedRows === 1) {
       res.send({ status: 200, message: 'Comment added.', result: newComment });

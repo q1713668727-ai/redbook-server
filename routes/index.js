@@ -206,19 +206,44 @@ router.post('/setUserData', async (req, res) => {
 
 router.post('/getAllUser', async (req, res) => {
   try {
-    const result = await query('SELECT * FROM `login`;');
-    const excludeAccounts = Array.isArray(req.body.account) ? req.body.account : [];
+    const excludeAccounts = Array.isArray(req.body.account)
+      ? req.body.account.map((item) => String(item || '').trim()).filter(Boolean)
+      : [];
+    const keyword = String(req.body.keyword || '').trim();
+    const limit = Math.max(Math.min(Number(req.body.limit) || 10, 50), 1);
+    const offset = Math.max(Number(req.body.offset) || 0, 0);
 
-    const arr = result
-      .filter(item => !excludeAccounts.includes(item.account))
-      .map(item => ({
-        ...item,
-        url: item.avatar,
-        avatar: undefined,
-        password: undefined,
-      }));
+    const where = [];
+    const params = [];
 
-    res.send({ status: 200, message: 'Fetch success.', result: arr });
+    if (excludeAccounts.length) {
+      const placeholders = excludeAccounts.map(() => '?').join(',');
+      where.push(`\`account\` NOT IN (${placeholders})`);
+      params.push(...excludeAccounts);
+    }
+
+    if (keyword) {
+      where.push('(`name` LIKE ? OR `account` LIKE ?)');
+      const likeText = `%${keyword}%`;
+      params.push(likeText, likeText);
+    }
+
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+    const countSql = `SELECT COUNT(*) AS total FROM \`login\` ${whereSql};`;
+    const listSql = `SELECT * FROM \`login\` ${whereSql} ORDER BY \`account\` DESC LIMIT ? OFFSET ?;`;
+
+    const countResult = await query(countSql, params);
+    const total = Number((countResult[0] && countResult[0].total) || 0);
+    const result = await query(listSql, [...params, limit, offset]);
+
+    const arr = (result || []).map(item => ({
+      ...item,
+      url: item.avatar,
+      avatar: undefined,
+      password: undefined,
+    }));
+
+    res.send({ status: 200, message: 'Fetch success.', result: arr, total });
   } catch (err) {
     catchError(res, 'Fetch users failed')(err);
   }
